@@ -15,6 +15,7 @@ Initial release.
 - Enabling or disabling the plugin row adds or removes the dock entry live — the widget probes this package's route.
 - All colours come from `--dsw-alias-*` theme tokens, so the UI follows the Harness light/dark setting.
 - Plugin row ships `disabled: true`: enable it in Settings → Plugins when you need it.
-- Plugin-owned `/power-task` route. Mutating endpoints accept only a request addressed to the local Harness address and carrying page evidence (`Sec-Fetch-Site` or a matching `Origin`); the route cannot run a power action immediately.
+- Plugin-owned `/power-task` route. Mutating endpoints refuse a request that proves it is not the page — a non-loopback `Host`, a browser-reported cross-site `Sec-Fetch-Site`, or a non-loopback `Origin` — while accepting the page's own transport, which forwards `Cookie` but no fetch metadata. The route cannot run a power action immediately.
+- `GET /power-task/debug` reports sessions, origin, and the headers of the last read and mutating request, so a rejected Arm is diagnosable without a browser console.
 - `power_after_task` agent tool: `status`, `arm`, `cancel`, `execute`.
 - English and Persian locale dictionaries plus Plugin Manager title, description, and icon.

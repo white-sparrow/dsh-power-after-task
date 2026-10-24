@@ -79,7 +79,9 @@ The row ships `disabled: true`, so after install nothing runs and the dock entry
 
 1. Settings → Plugins → **Power after task** → enable. The entry appears within a couple of seconds, and disabling the row removes it again — no page refresh needed either way.
 
-Arm and Cancel are mutating, so they run only for a request that is addressed to the local Harness address (`127.0.0.1`, `localhost`, `::1`) **and** carries evidence of being a page request (`Sec-Fetch-Site: same-origin`, or an `Origin` matching this server). Anything else — a foreign web page, a DNS-rebinding attack, a stray local process — gets `403`. Turning the row off clears every pending arm and countdown.
+Arm and Cancel are mutating, so they refuse a request that *proves* it is not this page: a non-loopback `Host` (DNS rebinding or a foreign vhost), a browser-reported cross-site request (`Sec-Fetch-Site`), or a non-loopback `Origin`. A request carrying none of that evidence is accepted — that is the Harness page through its own transport, which forwards `Cookie` but not `Sec-Fetch-*` or `Origin` — and a local process, which could run `shutdown.exe` directly anyway. A foreign web page cannot reach this port under its own name, and a DNS-rebinding attack arrives with the foreign `Host`, so both are refused. Turning the row off clears every pending arm and countdown.
+
+`GET /power-task/debug` reports the running and armed sessions, the server origin, and the headers of the last read plus the last mutating request (`accepted` says whether the guard passed), so a rejected Arm is diagnosable without a browser console.
 
 ## Configuration
 
@@ -115,7 +117,7 @@ No build step, no dependencies.
 | Symptom | Fix |
 | --- | --- |
 | No dock entry | The row is disabled — enable it in Settings → Plugins; the entry appears within a couple of seconds |
-| Arm answers `answered 403` | The request did not look like it came from the page: open Harness through its own local address, not a proxy or a foreign hostname |
+| Arm answers `answered 403` | Open `http://127.0.0.1:<port>/power-task/debug` and read `lastPost`: it shows the `host`, `secFetchSite`, `origin` and `accepted` of your click. A non-loopback `host` means the page is being served through a proxy or a foreign hostname |
 | Ribbon does not appear after upgrading the plugin | Refresh the page once so the browser loads the new client bundle |
 | Ribbon keeps counting after the task should be protected | That is the design: it counts until the command runs, you Cancel it, or new activity pauses it back to waiting |
 | `… failed` in the ribbon | The Host could not run the command — check power settings, hibernation/fast-startup, or shutdown privileges; Cancel clears the state |

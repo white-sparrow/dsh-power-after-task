@@ -135,6 +135,12 @@ export function apply(ctx, config) {
 
   /** Diagnostic from the last running-state read, surfaced by `/power-task/debug`. */
   let seedFailure = ''
+  /** Headers the last mutating request carried, so a rejected Arm is diagnosable. */
+  let lastPost = null
+  let postAttempts = 0
+  /** Headers the last read request carried: the page polls here every couple of seconds. */
+  let lastGet = null
+  let getAttempts = 0
 
   /**
    * Ask the Session domain which Agents are running, so an arm made before this
@@ -266,7 +272,7 @@ export function apply(ctx, config) {
   }
 
   /**
-   * Refuse a read request that did not come from this page.
+   * Refuse a read request that proves it came from elsewhere.
    * @param req - the incoming request.
    * @returns whether the request may be served.
    */
@@ -276,40 +282,36 @@ export function apply(ctx, config) {
     const origin = req.headers['origin']
     if (typeof origin !== 'string') return true
     try {
-      const url = new URL(origin)
-      const port = url.port || (url.protocol === 'https:' ? '443' : '80')
-      const own = serverOrigin()
-      if (!own) return true
-      return port === (own.port || '80')
-        && ['localhost', '127.0.0.1', '::1', ctx.webServer.host ?? ''].includes(url.hostname)
+      return isLoopbackHost(new URL(origin).hostname)
     } catch {
       return false
     }
   }
 
   /**
-   * Whether a mutating request is trusted: addressed to the local Harness
-   * address, and sent by the page rather than by a stray process or another
-   * web page.
+   * Whether a mutating request is trusted. A request is refused only when it
+   * proves it is not the page: addressed to a non-loopback host (DNS
+   * rebinding or a foreign vhost), reported by the browser as cross-site, or
+   * sent with a non-loopback `Origin`. A request carrying none of that
+   * evidence passes: it is the Harness page through its own transport, or a
+   * local process — which could run `shutdown.exe` directly anyway.
    * @param req - the incoming request.
    * @returns whether Arm or Cancel may run.
    */
   function fromPage(req) {
-    if (!isLoopbackHost(req.headers.host)) return false
+    const host = req.headers.host
+    if (typeof host === 'string' && !isLoopbackHost(host)) return false
     const site = req.headers['sec-fetch-site']
-    if (typeof site === 'string') return site === 'same-origin' || site === 'none'
+    if (typeof site === 'string' && site !== 'same-origin' && site !== 'none') return false
     const origin = req.headers['origin']
-    if (typeof origin !== 'string') return false
-    try {
-      const url = new URL(origin)
-      if (!isLoopbackHost(url.hostname)) return false
-      const own = serverOrigin()
-      if (!own) return true
-      const port = url.port || (url.protocol === 'https:' ? '443' : '80')
-      return port === (own.port || '80')
-    } catch {
-      return false
+    if (typeof origin === 'string') {
+      try {
+        if (!isLoopbackHost(new URL(origin).hostname)) return false
+      } catch {
+        return false
+      }
     }
+    return true
   }
 
   /**
@@ -328,14 +330,30 @@ export function apply(ctx, config) {
     const sub = path.slice(ROUTE.length).replace(/^\//, '')
     try {
       if (sub === 'debug') return reply(200, {
-        marker: 'guard-v5',
+        marker: 'guard-v6',
         platform: process.platform,
         running: [...running],
         pending: [...pending.keys()],
         seedFailure,
-        guard: 'loopback host + page request',
+        guard: 'refuse non-loopback host, cross-site, or non-loopback origin',
+        serverOrigin: serverOrigin() ?? null,
+        postAttempts,
+        lastPost,
+        getAttempts,
+        lastGet,
       })
       if (sub === 'defaults') return reply(200, { actions: POWER_ACTIONS, defaultAction, graceSeconds: defaultGrace })
+      if (req.method === 'GET' && (sub === 'defaults' || sub === 'state')) {
+        getAttempts += 1
+        lastGet = {
+          at: new Date().toISOString(),
+          path,
+          host: req.headers.host ?? null,
+          secFetchSite: req.headers['sec-fetch-site'] ?? null,
+          origin: req.headers['origin'] ?? null,
+          cookie: Boolean(req.headers.cookie),
+        }
+      }
       if (req.method === 'GET' && sub === 'state') {
         const query = new URLSearchParams((req.url ?? '').split('?')[1] ?? '').get('session')
         return reply(200, query ? stateOf(query) : {
@@ -343,10 +361,21 @@ export function apply(ctx, config) {
         })
       }
       if (req.method !== 'POST') return reply(405, { error: `unsupported method ${req.method ?? 'unknown'}` })
-      // Arming and cancelling are mutating: they require a page request addressed
-      // to the local Harness address.
-      if (!fromPage(req)) {
-        return reply(403, { error: 'this control only accepts requests from the Harness page' })
+      postAttempts += 1
+      const accepted = fromPage(req)
+      lastPost = {
+        at: new Date().toISOString(),
+        path,
+        host: req.headers.host ?? null,
+        secFetchSite: req.headers['sec-fetch-site'] ?? null,
+        origin: req.headers['origin'] ?? null,
+        contentType: req.headers['content-type'] ?? null,
+        accepted,
+      }
+      // Arming and cancelling are mutating: they refuse a request that proves it
+      // is not this page.
+      if (!accepted) {
+        return reply(403, { error: 'this control only accepts requests from the Harness page', hint: 'see /power-task/debug' })
       }
 
       const body = await readJsonBody(req)
