@@ -1,0 +1,12 @@
+- insert:
+    - id: power-after-task
+      name: 'dsh-power-after-task'
+      # Installed but off: nothing runs, and no dock entry appears, until the
+      # row is enabled in Settings → Plugins → “Power after task”.
+      disabled: true
+      config:
+        # One of 'sleep', 'shutdown', 'restart' — the action the control preselects.
+        defaultAction: shutdown
+        # Grace period, in seconds, between the task finishing and the power action running.
+        # The countdown can be cancelled while it runs.
+        graceSeconds: 45

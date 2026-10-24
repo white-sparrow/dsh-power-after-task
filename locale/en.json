@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Power after task",
+    "description": "Sleep, shut down, or restart this Windows PC after the current task finishes, with a cancellable grace countdown in the composer dock and a full-width countdown ribbon. Off by default: enable this row here."
+  }
+}
