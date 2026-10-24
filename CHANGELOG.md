@@ -19,4 +19,4 @@ Initial release.
 - `GET /power-task/debug` reports sessions, origin, and the headers of the last read and mutating request, so a rejected Arm is diagnosable without a browser console.
 - `power_after_task` agent tool: `status`, `arm`, `cancel`, `execute`.
 - English and Persian locale dictionaries plus Plugin Manager title, description, and icon.
-- Local publish helper: `npm run publish:local` reads `NPM_TOKEN` from a gitignored `.env`, publishes through a throwaway owner-only npmrc, and deletes it afterwards.
+- Local release helper: `npm run stage` publishes through npm staged publishing with `NPM_TOKEN` from a gitignored `.env`, via a throwaway owner-only npmrc and a pinned npm 11 under `.npm-tools/`; `stage:list`, `stage:view`, `stage:approve`, and `stage:reject` manage what is waiting.

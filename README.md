@@ -126,7 +126,7 @@ No build step, no dependencies.
 
 ## Publish to npm
 
-Publishing needs an npm credential, and `.env` — gitignored and excluded from the tarball — is where it lives on your machine:
+Releases go through npm **staged publishing**, so the access token can be limited to staging and never allowed to publish directly. `.env` — gitignored and excluded from the tarball — is where that token lives on your machine:
 
 ```
 NPM_TOKEN=<your npm access token>
@@ -135,10 +135,21 @@ NPM_TOKEN=<your npm access token>
 Create it at npmjs.com → Account settings → Access tokens → **Granular Access Token**, scoped to `dsh-power-after-task` only, type **Automation**, no read access to private packages, short expiry (`.env.example` documents the format).
 
 ```sh
-npm run publish:local
+npm run stage            # packs the repo and puts the version in the registry staging area
+npm run stage:list       # what is waiting, with stage ids
+npm run stage:view <id>  # one staged version in detail
 ```
 
-`scripts/publish.mjs` reads `NPM_TOKEN` from `.env` (or the environment), writes it into a throwaway `.npmrc` under your temp directory with owner-only access, runs `npm publish --access public` — which still runs `prepublishOnly` → `npm run check` first — and deletes that file when the publish returns. npm 10 ignores `${VAR}` interpolation inside `--userconfig`, so the value has to be written literally there. The token appears in no command line, no npm output, no commit, and no tarball; nothing publishes without it.
+Then approve it yourself, in your own terminal, because approval asks for a 2FA code:
+
+```sh
+npm run stage:approve <stage-id>   # publishes the staged version
+npm run stage:reject  <stage-id>   # or discards it
+```
+
+Staging a name that does not exist yet creates the package with a `0.0.0-stage` placeholder; approval publishes the real version and moves `latest` to it. A staging-only token cannot publish directly, so `npm run publish:local` (plain `npm publish`) only works with a direct-capable token.
+
+`scripts/npm-auth.mjs` reads `NPM_TOKEN` from `.env` (or the environment), writes it into a throwaway owner-only `.npmrc` in your temp directory for the duration of the command, and deletes it afterwards — npm ignores `${VAR}` interpolation inside `--userconfig`, so the value has to be written literally there. `npm stage` needs npm 11+, and `npx npm@11 -- stage …` misroutes its arguments, so the helper installs npm under `.npm-tools/` (gitignored) and runs its `npm-cli.js` through node. The token appears in no command line, no npm output, no commit, and no tarball.
 
 ## License
 

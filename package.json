@@ -35,7 +35,14 @@
   "scripts": {
     "check": "node --check index.js && node --check client.js",
     "prepublishOnly": "npm run check",
-    "publish:local": "node scripts/publish.mjs"
+    "prepack": "npm run check",
+    "stage": "node scripts/npm-auth.mjs stage publish",
+    "stage:list": "node scripts/npm-auth.mjs stage list",
+    "stage:view": "node scripts/npm-auth.mjs stage view",
+    "stage:approve": "node scripts/npm-auth.mjs stage approve",
+    "stage:reject": "node scripts/npm-auth.mjs stage reject",
+    "stage:download": "node scripts/npm-auth.mjs stage download",
+    "publish:local": "node scripts/npm-auth.mjs publish"
   },
   "exports": {
     ".": "./index.js",
