@@ -34,7 +34,8 @@
   },
   "scripts": {
     "check": "node --check index.js && node --check client.js",
-    "prepublishOnly": "npm run check"
+    "prepublishOnly": "npm run check",
+    "publish:local": "node scripts/publish.mjs"
   },
   "exports": {
     ".": "./index.js",

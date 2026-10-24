@@ -124,6 +124,22 @@ No build step, no dependencies.
 | Nothing happens when the task ends | The session is still running (a goal continuation, a subagent, or a queued message keeps it `running`) |
 | Control missing on the Desktop app | Expected: that composition has no web server |
 
+## Publish to npm
+
+Publishing needs an npm credential, and `.env` — gitignored and excluded from the tarball — is where it lives on your machine:
+
+```
+NPM_TOKEN=<your npm access token>
+```
+
+Create it at npmjs.com → Account settings → Access tokens → **Granular Access Token**, scoped to `dsh-power-after-task` only, type **Automation**, no read access to private packages, short expiry (`.env.example` documents the format).
+
+```sh
+npm run publish:local
+```
+
+`scripts/publish.mjs` reads `NPM_TOKEN` from `.env` (or the environment), writes it into a throwaway `.npmrc` under your temp directory with owner-only access, runs `npm publish --access public` — which still runs `prepublishOnly` → `npm run check` first — and deletes that file when the publish returns. npm 10 ignores `${VAR}` interpolation inside `--userconfig`, so the value has to be written literally there. The token appears in no command line, no npm output, no commit, and no tarball; nothing publishes without it.
+
 ## License
 
 MIT — see `LICENSE`.
