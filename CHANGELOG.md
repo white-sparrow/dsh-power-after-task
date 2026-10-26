@@ -2,12 +2,15 @@
 
 All notable changes to `dsh-power-after-task` are documented here.
 
-## Unreleased
+## 1.0.1
 
-- Repository: CI check workflow, issue/PR templates, security policy,
-  contributing guide, dependabot, editorconfig; README rewritten for the
-  published npm package; the inert `publish.yml` workflow removed (releases
-  go through npm staged publishing — see CONTRIBUTING).
+- Search metadata: npm `description` and `keywords` rewritten to cover DeepSeek
+  Harness / DSH / cordis / Windows power vocabulary, so the package is findable
+  on npm and the ecosystem index. No runtime change.
+- Bundled README rewritten for the published package (badges, tighter sections).
+- Repository only (not in the tarball): CI check workflow, issue/PR templates,
+  security policy, contributing guide, dependabot, editorconfig; the inert
+  `publish.yml` workflow removed (releases go through npm staged publishing).
 
 ## 1.0.0
 
