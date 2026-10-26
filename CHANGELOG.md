@@ -2,6 +2,13 @@
 
 All notable changes to `dsh-power-after-task` are documented here.
 
+## Unreleased
+
+- Repository: CI check workflow, issue/PR templates, security policy,
+  contributing guide, dependabot, editorconfig; README rewritten for the
+  published npm package; the inert `publish.yml` workflow removed (releases
+  go through npm staged publishing — see CONTRIBUTING).
+
 ## 1.0.0
 
 Initial release.

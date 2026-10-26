@@ -1,0 +1,25 @@
+name: feature_request
+description: Suggest something for the plugin
+title: "[feat] "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    attributes:
+      label: Suggestion
+      description: What should change, in one short paragraph.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Why
+      description: What problem it solves for you.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Alternatives
+      description: Workarounds that exist today (e.g. the power_after_task tool).
+  - type: textarea
+    attributes:
+      label: Safety notes
+      description: Anything about firing, cancelling, or guard behaviour the change must preserve.

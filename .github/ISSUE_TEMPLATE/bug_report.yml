@@ -1,0 +1,47 @@
+name: bug_report
+description: Report a problem with the plugin
+title: "[bug] "
+labels: ["bug"]
+body:
+  - type: textarea
+    attributes:
+      label: What happened
+      description: One or two sentences, then the exact steps.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Steps to reproduce
+      description: Include whether the plugin row was enabled, the action chosen, and the grace setting.
+      placeholder: |
+        1. Enabled plugin row in Settings → Plugins
+        2. Clicked dock entry, selected Sleep / 30s, pressed Arm
+        3. Finished the task; expected countdown, got …
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Actual vs expected
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Plugin state
+      description: Paste the JSON from `GET /power-task/debug` in your browser (it contains no secrets). Also paste any ribbon/status-bar text you saw.
+      render: json
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: Environment
+      description: DSH version, plugin version, platform (web/desktop), Windows edition.
+      placeholder: "DSH …, plugin 1.0.0, web, Windows 11 Pro"
+    validations:
+      required: true
+  - type: checkboxes
+    attributes:
+      options:
+        - label: I searched open issues and this is not a duplicate.
+          required: true
+        - label: I am NOT reporting a security problem publicly (open a private advisory instead — see SECURITY.md).
+          required: true
